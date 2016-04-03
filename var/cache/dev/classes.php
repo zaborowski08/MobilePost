@@ -162,6 +162,9 @@ $this->loadSession();
 }
 public function registerBag(SessionBagInterface $bag)
 {
+if ($this->started) {
+throw new \LogicException('Cannot register a bag when the session is already started.');
+}
 $this->bags[$bag->getName()] = $bag;
 }
 public function getBag($name)
@@ -691,7 +694,7 @@ $name = str_replace(':/',':', preg_replace('#/{2,}#','/', str_replace('\\','/', 
 if (false !== strpos($name,'..')) {
 throw new \RuntimeException(sprintf('Template name "%s" contains invalid characters.', $name));
 }
-if (!preg_match('/^(?:([^:]*):)?(?:([^:]*):)?(.+)\.([^\.]+)\.([^\.]+)$/', $name, $matches)) {
+if (!preg_match('/^(?:([^:]*):([^:]*):)?(.+)\.([^\.]+)\.([^\.]+)$/', $name, $matches) || $this->isAbsolutePath($name) || 0 === strpos($name,'@')) {
 return parent::parse($name);
 }
 $template = new TemplateReference($matches[1], $matches[2], $matches[3], $matches[4], $matches[5]);
@@ -703,6 +706,10 @@ throw new \InvalidArgumentException(sprintf('Template name "%s" is not valid.', 
 }
 }
 return $this->cache[$name] = $template;
+}
+private function isAbsolutePath($file)
+{
+return (bool) preg_match('#^(?:/|[a-zA-Z]:)#', $file);
 }
 }
 }
@@ -870,14 +877,7 @@ $schemeAuthority ='';
 if ($host = $this->context->getHost()) {
 $scheme = $this->context->getScheme();
 if ($requiredSchemes) {
-$schemeMatched = false;
-foreach ($requiredSchemes as $requiredScheme) {
-if ($scheme === $requiredScheme) {
-$schemeMatched = true;
-break;
-}
-}
-if (!$schemeMatched) {
+if (!in_array($scheme, $requiredSchemes, true)) {
 $referenceType = self::ABSOLUTE_URL;
 $scheme = current($requiredSchemes);
 }
@@ -2047,7 +2047,11 @@ $attributes = $request->attributes->all();
 $arguments = array();
 foreach ($parameters as $param) {
 if (array_key_exists($param->name, $attributes)) {
+if (PHP_VERSION_ID >= 50600 && $param->isVariadic() && is_array($attributes[$param->name])) {
+$arguments = array_merge($arguments, array_values($attributes[$param->name]));
+} else {
 $arguments[] = $attributes[$param->name];
+}
 } elseif ($param->getClass() && $param->getClass()->isInstance($request)) {
 $arguments[] = $request;
 } elseif ($param->isDefaultValueAvailable()) {
@@ -4964,11 +4968,11 @@ if ($data instanceof \DateTime) {
 return $data->format($this->dateFormat);
 }
 if (is_object($data)) {
-if ($data instanceof Exception) {
+if ($data instanceof Exception || (PHP_VERSION_ID > 70000 && $data instanceof \Throwable)) {
 return $this->normalizeException($data);
 }
 if (method_exists($data,'__toString') && !$data instanceof \JsonSerializable) {
-$value = (string) $data;
+$value = $data->__toString();
 } else {
 $value = $this->toJson($data, true);
 }
@@ -4979,8 +4983,11 @@ return sprintf('[resource] (%s)', get_resource_type($data));
 }
 return'[unknown('.gettype($data).')]';
 }
-protected function normalizeException(Exception $e)
+protected function normalizeException($e)
 {
+if (!$e instanceof Exception && !$e instanceof \Throwable) {
+throw new \InvalidArgumentException('Exception/Throwable expected, got '.gettype($e).' / '.get_class($e));
+}
 $data = array('class'=> get_class($e),'message'=> $e->getMessage(),'code'=> $e->getCode(),'file'=> $e->getFile().':'.$e->getLine(),
 );
 $trace = $e->getTrace();
@@ -4999,16 +5006,34 @@ return $data;
 protected function toJson($data, $ignoreErrors = false)
 {
 if ($ignoreErrors) {
-if (version_compare(PHP_VERSION,'5.4.0','>=')) {
-return @json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+return @$this->jsonEncode($data);
 }
-return @json_encode($data);
+$json = $this->jsonEncode($data);
+if ($json === false) {
+$json = $this->handleJsonError(json_last_error(), $data);
 }
+return $json;
+}
+private function jsonEncode($data)
+{
 if (version_compare(PHP_VERSION,'5.4.0','>=')) {
-$json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+return json_encode($data);
+}
+private function handleJsonError($code, $data)
+{
+if ($code !== JSON_ERROR_UTF8) {
+$this->throwEncodeError($code, $data);
+}
+if (is_string($data)) {
+$this->detectAndCleanUtf8($data);
+} elseif (is_array($data)) {
+array_walk_recursive($data, array($this,'detectAndCleanUtf8'));
 } else {
-$json = json_encode($data);
+$this->throwEncodeError($code, $data);
 }
+$json = $this->jsonEncode($data);
 if ($json === false) {
 $this->throwEncodeError(json_last_error(), $data);
 }
@@ -5034,11 +5059,24 @@ $msg ='Unknown error';
 }
 throw new \RuntimeException('JSON encoding failed: '.$msg.'. Encoding: '.var_export($data, true));
 }
+public function detectAndCleanUtf8(&$data)
+{
+if (is_string($data) && !preg_match('//u', $data)) {
+$data = preg_replace_callback('/[\x80-\xFF]+/',
+function ($m) { return utf8_encode($m[0]); },
+$data
+);
+$data = str_replace(
+array('¤','¦','¨','´','¸','¼','½','¾'),
+array('€','Š','š','Ž','ž','Œ','œ','Ÿ'),
+$data
+);
+}
+}
 }
 }
 namespace Monolog\Formatter
 {
-use Exception;
 class LineFormatter extends NormalizerFormatter
 {
 const SIMPLE_FORMAT ="[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n";
@@ -5078,6 +5116,12 @@ $output = str_replace('%extra.'.$var.'%', $this->stringify($val), $output);
 unset($vars['extra'][$var]);
 }
 }
+foreach ($vars['context'] as $var => $val) {
+if (false !== strpos($output,'%context.'.$var.'%')) {
+$output = str_replace('%context.'.$var.'%', $this->stringify($val), $output);
+unset($vars['context'][$var]);
+}
+}
 if ($this->ignoreEmptyContextAndExtra) {
 if (empty($vars['context'])) {
 unset($vars['context']);
@@ -5107,8 +5151,11 @@ public function stringify($value)
 {
 return $this->replaceNewlines($this->convertToString($value));
 }
-protected function normalizeException(Exception $e)
+protected function normalizeException($e)
 {
+if (!$e instanceof \Exception && !$e instanceof \Throwable) {
+throw new \InvalidArgumentException('Exception/Throwable expected, got '.gettype($e).' / '.get_class($e));
+}
 $previousText ='';
 if ($previous = $e->getPrevious()) {
 do {
@@ -5610,19 +5657,20 @@ const ALERT = 550;
 const EMERGENCY = 600;
 const API = 1;
 protected static $levels = array(
-100 =>'DEBUG',
-200 =>'INFO',
-250 =>'NOTICE',
-300 =>'WARNING',
-400 =>'ERROR',
-500 =>'CRITICAL',
-550 =>'ALERT',
-600 =>'EMERGENCY',
+self::DEBUG =>'DEBUG',
+self::INFO =>'INFO',
+self::NOTICE =>'NOTICE',
+self::WARNING =>'WARNING',
+self::ERROR =>'ERROR',
+self::CRITICAL =>'CRITICAL',
+self::ALERT =>'ALERT',
+self::EMERGENCY =>'EMERGENCY',
 );
 protected static $timezone;
 protected $name;
 protected $handlers;
 protected $processors;
+protected $microsecondTimestamps = true;
 public function __construct($name, array $handlers = array(), array $processors = array())
 {
 $this->name = $name;
@@ -5632,6 +5680,12 @@ $this->processors = $processors;
 public function getName()
 {
 return $this->name;
+}
+public function withName($name)
+{
+$new = clone $this;
+$new->name = $name;
+return $new;
 }
 public function pushHandler(HandlerInterface $handler)
 {
@@ -5676,6 +5730,10 @@ public function getProcessors()
 {
 return $this->processors;
 }
+public function useMicrosecondTimestamps($micro)
+{
+$this->microsecondTimestamps = (bool) $micro;
+}
 public function addRecord($level, $message, array $context = array())
 {
 if (!$this->handlers) {
@@ -5683,11 +5741,13 @@ $this->pushHandler(new StreamHandler('php://stderr', static::DEBUG));
 }
 $levelName = static::getLevelName($level);
 $handlerKey = null;
-foreach ($this->handlers as $key => $handler) {
+reset($this->handlers);
+while ($handler = current($this->handlers)) {
 if ($handler->isHandling(array('level'=> $level))) {
-$handlerKey = $key;
+$handlerKey = key($this->handlers);
 break;
 }
+next($this->handlers);
 }
 if (null === $handlerKey) {
 return false;
@@ -5695,14 +5755,22 @@ return false;
 if (!static::$timezone) {
 static::$timezone = new \DateTimeZone(date_default_timezone_get() ?:'UTC');
 }
-$record = array('message'=> (string) $message,'context'=> $context,'level'=> $level,'level_name'=> $levelName,'channel'=> $this->name,'datetime'=> \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true)), static::$timezone)->setTimezone(static::$timezone),'extra'=> array(),
+if ($this->microsecondTimestamps) {
+$ts = \DateTime::createFromFormat('U.u', sprintf('%.6F', microtime(true)), static::$timezone);
+} else {
+$ts = new \DateTime(null, static::$timezone);
+}
+$ts->setTimezone(static::$timezone);
+$record = array('message'=> (string) $message,'context'=> $context,'level'=> $level,'level_name'=> $levelName,'channel'=> $this->name,'datetime'=> $ts,'extra'=> array(),
 );
 foreach ($this->processors as $processor) {
 $record = call_user_func($processor, $record);
 }
-while (isset($this->handlers[$handlerKey]) &&
-false === $this->handlers[$handlerKey]->handle($record)) {
-$handlerKey++;
+while ($handler = current($this->handlers)) {
+if (true === $handler->handle($record)) {
+break;
+}
+next($this->handlers);
 }
 return true;
 }
@@ -7028,89 +7096,6 @@ foreach ($this->converters as $all) {
 $converters = array_merge($converters, $all);
 }
 return $converters;
-}
-}
-}
-namespace Sensio\Bundle\FrameworkExtraBundle\EventListener
-{
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
-use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
-class TemplateListener implements EventSubscriberInterface
-{
-protected $container;
-public function __construct(ContainerInterface $container)
-{
-$this->container = $container;
-}
-public function onKernelController(FilterControllerEvent $event)
-{
-$request = $event->getRequest();
-$template = $request->attributes->get('_template');
-if (null === $template) {
-return;
-}
-if (!$template instanceof Template) {
-throw new \InvalidArgumentException('Request attribute "_template" is reserved for @Template annotations.');
-}
-$template->setOwner($event->getController());
-}
-public function onKernelView(GetResponseForControllerResultEvent $event)
-{
-$request = $event->getRequest();
-$template = $request->attributes->get('_template');
-if (null === $template) {
-return;
-}
-$parameters = $event->getControllerResult();
-$owner = $template->getOwner();
-list($controller, $action) = $owner;
-if (null === $template->getTemplate()) {
-if ($action ==='__invoke') {
-throw new \InvalidArgumentException(sprintf('Cannot guess a template name for "%s::%s", please provide a template name.', get_class($controller), $action));
-}
-$guesser = $this->container->get('sensio_framework_extra.view.guesser');
-$template->setTemplate($guesser->guessTemplateName($owner, $request, $template->getEngine()));
-}
-if (null === $parameters) {
-$parameters = $this->resolveDefaultParameters($request, $template, $controller, $action);
-}
-$templating = $this->container->get('templating');
-if ($template->isStreamable()) {
-$callback = function () use ($templating, $template, $parameters) {
-return $templating->stream($template->getTemplate(), $parameters);
-};
-$event->setResponse(new StreamedResponse($callback));
-}
-$event->setResponse($templating->renderResponse($template->getTemplate(), $parameters));
-}
-public static function getSubscribedEvents()
-{
-return array(
-KernelEvents::CONTROLLER => array('onKernelController', -128),
-KernelEvents::VIEW =>'onKernelView',
-);
-}
-private function resolveDefaultParameters(Request $request, Template $template, $controller, $action)
-{
-$parameters = array();
-$arguments = $template->getVars();
-if (0 === count($arguments)) {
-$r = new \ReflectionObject($controller);
-$arguments = array();
-foreach ($r->getMethod($action)->getParameters() as $param) {
-$arguments[] = $param->getName();
-}
-}
-foreach ($arguments as $argument) {
-$parameters[$argument] = $request->attributes->get($argument);
-}
-return $parameters;
 }
 }
 }
