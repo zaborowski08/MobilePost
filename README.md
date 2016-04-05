@@ -1,12 +1,4 @@
-# MobilePost
-Programowanie aplikacji internetowych - projekt
+MobilePost
+==========
 
-How to use:
-
-Install: https://getcomposer.org/download/
-
-cmd -> open directory with repo
-
-composer update
-
-php bin/console server:run localhost -p 8080
+A Symfony project created on April 5, 2016, 1:13 pm.
