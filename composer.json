@@ -1,5 +1,5 @@
 {
-    "name": "mklos/mobile-post",
+    "name": "michal/mobile-post",
     "license": "proprietary",
     "type": "project",
     "autoload": {
@@ -32,7 +32,7 @@
     },
     "require-dev": {
         "sensio/generator-bundle": "^3.0",
-        "symfony/phpunit-bridge": "^2.7"
+        "symfony/phpunit-bridge": "^3.0"
     },
     "scripts": {
         "post-install-cmd": [
@@ -51,11 +51,6 @@
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installRequirementsFile",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::prepareDeploymentTarget"
         ]
-    },
-    "config": {
-        "platform": {
-            "php": "5.5.9"
-        }
     },
     "extra": {
         "symfony-app-dir": "app",
