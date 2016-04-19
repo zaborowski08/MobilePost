@@ -11,11 +11,7 @@ use Symfony\Component\Routing\Router;
 use Symfony\Component\Security\Core\SecurityContext;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-/**
- * Description of AuthenticationHandler
- *
- * @author Wiktor Pikosz <wiktor12348@gmail.com>
- */
+
 class AuthenticationHandler implements AuthenticationSuccessHandlerInterface, AuthenticationFailureHandlerInterface {
   private $router;
   public function __construct(Router $router) {
