@@ -11,3 +11,11 @@ services:
     postman_form.handler:
         class: AppBundle\Handler\PostmanFormHandler
         arguments: ['@doctrine.orm.entity_manager', %postman.class%, '@form.factory', 'AppBundle\Form\PostmanType']
+    authentication_handler:
+        class: AppBundle\Handler\AuthenticationHandler
+        arguments:  ["@router"]
+        tags:
+            - { name: 'monolog.logger', channel: 'security' }
+    user_form.handler:
+        class: AppBundle\Handler\UserFormHandler
+        arguments: ['@service_container']
