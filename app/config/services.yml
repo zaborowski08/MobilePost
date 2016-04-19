@@ -2,8 +2,12 @@
 # http://symfony.com/doc/current/book/service_container.html
 parameters:
      parcelorder.class: AppBundle\Entity\ParcelOrder
+     postman.class: AppBundle\Entity\Postman
 
 services:
-     parcelorder_form.handler:
-         class: AppBundle\Handler\ParcelorderFormHandler
-         arguments: ['@doctrine.orm.entity_manager', %parcelorder.class%, '@form.factory', 'AppBundle\Form\ParcelorderType']
+    parcelorder_form.handler:
+        class: AppBundle\Handler\ParcelorderFormHandler
+        arguments: ['@doctrine.orm.entity_manager', %parcelorder.class%, '@form.factory', 'AppBundle\Form\ParcelorderType']
+    postman_form.handler:
+        class: AppBundle\Handler\PostmanFormHandler
+        arguments: ['@doctrine.orm.entity_manager', %postman.class%, '@form.factory', 'AppBundle\Form\PostmanType']
