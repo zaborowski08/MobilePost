@@ -16,9 +16,9 @@ class ParcelorderType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('parcel')
-            ->add('sender')
-            ->add('receiver')
+            ->add('parcel', ParcelType::class)
+            ->add('sender', AddressDataType::class)
+            ->add('receiver', addressDataType::class)
             ->add('tracking')
         ;
     }

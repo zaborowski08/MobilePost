@@ -39,9 +39,12 @@ class ParcelorderController extends FOSRestController {
      */
 	public function ParcelorderAction(Request $request) {
 		try {
-			$newParcel = $this->container->get('parcelorder_form.handler')->post($request->request->all());
+			$newParcel = $this->container->get('parcel_form.handler')->post($request->request->get('parcel'));
+			$newSender = $this->container->get('addressdata_form.handler')->post($request->request->get('sender'));
+			$newReceiver = $this->container->get('addressdata_form.handler')->post($request->request->get('receiver'));
+			$newParcelorder = $this->container->get('parcelorder_form.handler')->post($request->request->all());
 			$routeOptions = array(
- 			'id' => $newParcel->getId(),
+ 			'id' => $newParcelorder->getId(),
  			'_format' => $request->get('_format')
  			);
  			return $this->routeRedirectView('get_parcelorder', $routeOptions, Response::HTTP_CREATED);
