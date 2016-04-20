@@ -12,6 +12,12 @@ use AppBundle\Model\PostmanInterface;
  */
 class PostmanRepository extends \Doctrine\ORM\EntityRepository
 {
+    public function find($id)
+    {
+        return $this->getEntityManager()
+            ->createQuery('SELECT p FROM AppBundle:Postman p WHERE p.id =' . $id )
+            ->getResult();
+    }
     public function save(PostmanInterface $postman) {
 		$em = $this->getEntityManager();
         	$em->persist($postman);

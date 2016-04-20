@@ -58,4 +58,30 @@ class PostmanController extends FOSRestController {
             return array('form' => $exception->getForm());
         }
  }
+    
+    /**
+     * @Route("/postman/{id}.{_format}", name="put_postman")
+     * @Method({"PUT"})
+     */
+    public function putPostmanAction(Request $request, $id) {
+        try{
+            $postman = $this->getDoctrine()->getRepository('AppBundle:Postman')
+                          ->find($id);
+            if(!$postman)
+            {
+                $statusCode = Response::HTTP_CREATED;
+                $postman = $this->container->get('postman_form.handler')->post($request->request->all());
+            }
+            else
+            {
+                $statusCode = Response::HTTP_NO_CONTENT;
+                $postman = $this->container->get('postman_form.handler')->put($postman[0],$request->request->all());
+            }
+            $routeOptions = array('id'=>$postman->getId(),'_format'=>$request->get('_format'));
+            return $this->routeRedirectView('get_postman',$routeOptions,$statusCode);
+        }
+        catch(InvalidFormException $exception){
+            return $exception->getForm();
+        }
+     }
 }
