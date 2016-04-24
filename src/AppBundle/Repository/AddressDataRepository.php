@@ -1,6 +1,8 @@
 <?php
 
 namespace AppBundle\Repository;
+use Doctrine\ORM\EntityRepository;
+use AppBundle\Model\AddressDataInterface;
 
 /**
  * AddressDataRepository
@@ -10,4 +12,9 @@ namespace AppBundle\Repository;
  */
 class AddressDataRepository extends \Doctrine\ORM\EntityRepository
 {
+	public function save(AddressDataInterface $adata) {
+		$em = $this->getEntityManager();
+        $em->persist($adata);
+        $em->flush();
+    }
 }

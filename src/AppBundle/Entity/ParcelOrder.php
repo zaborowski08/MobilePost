@@ -14,19 +14,19 @@ use AppBundle\Model\ParcelOrderInterface;
 class ParcelOrder implements ParcelorderInterface
 {
     /**
-      * @ORM\OneToOne(targetEntity="Parcel")
+      * @ORM\OneToOne(targetEntity="Parcel", cascade={"persist"})
       * @ORM\JoinColumn(name="parcel_id", referencedColumnName="id")
       */
     protected $parcel;
     
     /**
-      * @ORM\OneToOne(targetEntity="AddressData")
+      * @ORM\OneToOne(targetEntity="AddressData", cascade={"persist"})
       * @ORM\JoinColumn(name="sender_id", referencedColumnName="id")
       */
     protected $sender;
     
     /**
-      * @ORM\OneToOne(targetEntity="AddressData")
+      * @ORM\OneToOne(targetEntity="AddressData", cascade={"persist"})
       * @ORM\JoinColumn(name="receiver_id", referencedColumnName="id")
       */    
     protected $receiver;
