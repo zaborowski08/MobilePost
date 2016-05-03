@@ -18,4 +18,15 @@ class DefaultController extends Controller
             'base_dir' => realpath($this->getParameter('kernel.root_dir').'/..'),
         ]);
     }
+	
+	/**
+     * @Route("/newparcelorder", name="parcel_order_bs_form")
+     */
+    public function parcelorderbsAction(Request $request)
+    {
+        // replace this example code with whatever you need
+        return $this->render('AppBundle:Default:parcelorder.html.twig', [
+            'base_dir' => realpath($this->getParameter('kernel.root_dir').'/..'),
+        ]);
+    }
 }
