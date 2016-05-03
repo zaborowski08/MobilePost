@@ -7,5 +7,4 @@ fos_user:
 
 address_data:
     type: rest
-    prefix: /adr
-    resource: '@AppBundle/Resources/config/routing.yml'
+    resource: "AppBundle\Controller\AddressDataController"
