@@ -82,4 +82,4 @@ AppBundle\Entity\AddressData:
                 min: 8
                 max: 255
                 minMessage: 'Email address must be at least {{ limit }} characters long'
-                maxMessage: 'Email address cannot be longer than {{ limit }} characters'
+                maxMessage: 'Email address cannot be longer than {{ limit }} characters'h
