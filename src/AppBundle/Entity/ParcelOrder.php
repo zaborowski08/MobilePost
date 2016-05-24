@@ -153,4 +153,13 @@ class ParcelOrder implements ParcelorderInterface
     {
         return $this->receiver;
     }
+    
+    /**
+	 *
+	 * @return string String representation of this class
+	 */
+	public function __toString()
+	{
+	    return (string)$this->id;
+	}
 }

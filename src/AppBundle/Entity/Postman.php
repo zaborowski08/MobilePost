@@ -187,4 +187,13 @@ class Postman implements PostmanInterface
     {
         return $this->city;
     }
+    
+	/**
+	 *
+	 * @return string String representation of this class
+	 */
+	public function __toString()
+	{
+	    return (string)$this->id;
+	}
 }
