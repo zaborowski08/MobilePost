@@ -29,4 +29,12 @@ class DefaultController extends Controller
             'base_dir' => realpath($this->getParameter('kernel.root_dir').'/..'),
         ]);
     }
+    
+    /**
+     * @Route("/postmanpanel", name="postman_panel")
+     */
+	public function postmanpanelAction()
+	{
+		return $this->render('AppBundle:Default:postmanpanel.html.twig');
+	}
 }
