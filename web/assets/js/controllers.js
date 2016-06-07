@@ -4,9 +4,17 @@ var taskControllers = angular.module('taskControllers', []);
 var userControllers = angular.module('userControllers', []);
 var dashboardControllers = angular.module('dashboardControllers', []);
 
-taskControllers.controller('TaskListCtrl', ['$scope', 'Task',
- function($scope, Task) {
-$scope.tasks = Task.query();
+taskControllers.controller('TaskListCtrl', ['$scope', '$window', 'Task', 'Authorization',
+ function($scope, $window, Task, Authorization) {
+  Authorization.get(function(data){
+      if(data.roles != 'ROLE_ADMIN'){
+        $window.location.href = '#/login';
+      }
+      else{
+        $scope.authorization = true;
+        $scope.tasks = Task.query();
+      }
+    });
 }]);
 
 dashboardControllers.controller('Dashboard', ['$scope', '$window','Authorization', 
