@@ -11,14 +11,14 @@ var app = angular.module('postmanPanel', ['taskControllers',
 
 app.config(['$routeProvider', function($routeProvider) {
     $routeProvider.when('/login',{
-      templateUrl: 'assets/partials/user/login-form.html',
+      templateUrl: '/assets/partials/user/login-form.html',
       controller: 'LoginUserForm'
     }).
 	when('/tasklist',{
-			templateUrl: 'assets/partials/task-list.html',
+			templateUrl: '/assets/partials/task-list.html',
 			controller: 'TaskListCtrl'
 	}).otherwise({
-      templateUrl: '/MobilePost/web/assets/partials/index.html',
+      templateUrl: '/assets/partials/index.html',
       controller: 'Dashboard'
     });;
 }]);
