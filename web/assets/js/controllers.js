@@ -1,5 +1,6 @@
 'use strict';
 /* Controllers */
+var postmanControllers = angular.module('postmanControllers', []);
 var taskControllers = angular.module('taskControllers', []);
 var userControllers = angular.module('userControllers', []);
 var dashboardControllers = angular.module('dashboardControllers', []);
@@ -27,6 +28,52 @@ dashboardControllers.controller('Dashboard', ['$scope', '$window','Authorization
       }
       else{
         $scope.authorization = true;
+      }
+    });
+  }
+]);
+
+postmanControllers.controller('CreatePostmanForm', ['$scope', '$window',
+  'Postman', 'Authorization',  function ($scope, $window, Postman, Authorization) {
+    $scope.authorization = false;
+    
+    Authorization.get(function(data){
+      if(data.roles == 'ROLE_ADMIN'){
+        $scope.authorization = true;
+        
+        $scope.submit = function () {
+          Postman.save($scope.postman, function () {
+            $window.location.href = '#';
+          }, function (data, status, headers, config) {
+            console.log(data);
+            $scope.errors = {};
+            $scope.errors.user={};
+            $scope.errors.user.plainPassword={};
+
+            if(data.status == 400){
+
+              angular.forEach(data.data.errors.children, function(value, key){
+                if(Array.isArray(value.errors)){
+                  $scope.errors[key] = value.errors.join(',');
+                }
+              });
+
+              angular.forEach(data.data.errors.children.user.children, function(value, key){
+                if(Array.isArray(value.errors)){
+                  $scope.errors.user[key] = value.errors.join(',');
+                }
+              });
+               angular.forEach(data.data.errors.children.user.children.plainPassword.children, function(value, key){
+                if(Array.isArray(value.errors)){
+                  $scope.errors.user.plainPassword[key] = value.errors.join(',');
+                }
+              });
+            }
+          });
+        };
+      }
+      else{
+        $window.location.href = '#/login';
       }
     });
   }
