@@ -26,6 +26,10 @@ class PostmanFormHandler implements PostmanFormHandlerInterface
         $postman = $this->createPostman();
         return $this->processForm($postman, $parameters, 'POST');
     }
+    public function put(PostmanInterface $postman, array $parameters)
+    {
+        return $this->processForm($postman, $parameters, 'PUT');
+    }
     private function processForm(PostmanInterface $postman, array $parameters, $method = "PUT")
     {
         $form = $this->formFactory->create($this->formType, $postman, array('method' => $method));
