@@ -5,7 +5,10 @@ var app = angular.module('postmanPanel', ['taskControllers',
 										  'dashboardControllers',
 										  'userControllers',
 										  'userServices',
+											'postmanControllers',
+											'postmanServices',
 										  'authorizationServices',
+											'postmanDirectives',
 										  'ngRoute'
 										  ]);
 
@@ -14,6 +17,10 @@ app.config(['$routeProvider', function($routeProvider) {
       templateUrl: '/assets/partials/user/login-form.html',
       controller: 'LoginUserForm'
     }).
+	when('/postman/new', {
+      templateUrl: '/assets/partials/postman/postman-form.html',
+      controller: 'CreatePostmanForm'
+  }).
 	when('/tasklist',{
 			templateUrl: '/assets/partials/task-list.html',
 			controller: 'TaskListCtrl'

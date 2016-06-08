@@ -26,4 +26,4 @@ fos_user_security_logout:
 app_api:
   type: rest
   prefix: /api/postman
-  resource: AppBundle\Controller\postmanController
+  resource: AppBundle\Controller\PostmanController
