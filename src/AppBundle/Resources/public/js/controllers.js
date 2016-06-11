@@ -8,7 +8,7 @@ var dashboardControllers = angular.module('dashboardControllers', []);
 taskControllers.controller('TaskListCtrl', ['$scope', '$window', 'Task', 'Authorization',
  function($scope, $window, Task, Authorization) {
   Authorization.get(function(data){
-      if(data.roles != 'ROLE_ADMIN' || data.roles != 'ROLE_SUPER_ADMIN'){
+      if(data.roles != 'ROLE_ADMIN'){
         $window.location.href = '#/login';
       }
       else{
@@ -23,7 +23,7 @@ dashboardControllers.controller('Dashboard', ['$scope', '$window','Authorization
     $scope.authorization = false;
     
     Authorization.get(function(data){
-      if(data.roles != 'ROLE_ADMIN' || data.roles != 'ROLE_SUPER_ADMIN'){
+      if(data.roles != 'ROLE_ADMIN'){
         $window.location.href = '#/login';
       }
       else{
@@ -38,7 +38,7 @@ postmanControllers.controller('CreatePostmanForm', ['$scope', '$window',
     $scope.authorization = false;
     
     Authorization.get(function(data){
-     if(data.roles != 'ROLE_ADMIN' || data.roles != 'ROLE_SUPER_ADMIN'){
+     if(data.roles != 'ROLE_ADMIN'){
         $scope.authorization = true;
         
         $scope.submit = function () {
