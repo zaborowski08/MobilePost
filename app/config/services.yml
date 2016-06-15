@@ -5,6 +5,7 @@ parameters:
      postman.class: AppBundle\Entity\Postman
      parcel.class: AppBundle\Entity\Parcel
      addressdata.class: AppBundle\Entity\AddressData
+     postmantravel.class: AppBundle\Entity\PostmanTravel
 
 services:
     parcelorder_form.handler:
@@ -19,6 +20,9 @@ services:
     postman_form.handler:
         class: AppBundle\Handler\PostmanFormHandler
         arguments: ['@doctrine.orm.entity_manager', %postman.class%, '@form.factory', 'AppBundle\Form\PostmanType']
+    postmantravel_form.handler:
+        class: AppBundle\Handler\PostmanTravelFormHandler
+        arguments: ['@doctrine.orm.entity_manager', %postmantravel.class%, '@form.factory', 'AppBundle\Form\PostmanTravelType']
     authentication_handler:
         class: AppBundle\Handler\AuthenticationHandler
         arguments:  ["@router"]

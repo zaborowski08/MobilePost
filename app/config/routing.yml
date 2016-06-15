@@ -9,7 +9,7 @@ address_data:
     type: rest
     prefix: /adr
     resource: '@AppBundle/Resources/config/routing.yml'
-    
+
 app_user:
   type: rest
   prefix: /api
@@ -27,3 +27,7 @@ app_api:
   type: rest
   prefix: /api/postman
   resource: AppBundle\Controller\PostmanController
+
+travel:
+  type: rest
+  resource: AppBundle\Controller\PostmanTravelController

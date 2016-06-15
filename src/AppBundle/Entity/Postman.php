@@ -57,7 +57,6 @@ class Postman implements PostmanInterface
      */
     private $city;
 
-
     /**
      * Get id
      *
@@ -196,4 +195,6 @@ class Postman implements PostmanInterface
 	{
 	    return (string)$this->id;
 	}
+
+
 }

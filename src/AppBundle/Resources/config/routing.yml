@@ -1,3 +1,7 @@
+postman_travel:
+    type: rest
+    resource: 'AppBundle\Controller\PostmanTravelController'
+    
 address_data:
     type: rest
     prefix: /v1
